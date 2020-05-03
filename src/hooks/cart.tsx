@@ -31,21 +31,27 @@ const CartProvider: React.FC = ({ children }) => {
 
   useEffect(() => {
     async function loadProducts(): Promise<void> {
-      // TODO LOAD ITEMS FROM ASYNC STORAGE
-
       const getProductsString = await AsyncStorage.getItem(
         '@GoMarketplace:products',
       );
-      if (!getProductsString) {
+      if (getProductsString) {
         const getProducts = JSON.parse(getProductsString as string);
         setProducts(getProducts as Product[]);
-      } else {
-        // setProducts([]);
       }
     }
-
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    async function storeProducts(): Promise<void> {
+      await AsyncStorage.setItem(
+        '@GoMarketplace:products',
+        JSON.stringify(products),
+      );
+    }
+
+    storeProducts();
+  }, [products]);
 
   const addToCart = useCallback(
     async (product: Product) => {
@@ -55,17 +61,13 @@ const CartProvider: React.FC = ({ children }) => {
           setProducts([product]);
         } else {
           const findProduct = products.find(prod => prod.id === product.id);
+          product.quantity = 1;
           if (!findProduct) {
-            product.quantity = 1;
             setProducts([...products, product]);
           }
-
-          await AsyncStorage.setItem(
-            '@GoMarketplace:products',
-            JSON.stringify(products),
-          );
         }
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.log(err);
       }
     },
@@ -87,11 +89,6 @@ const CartProvider: React.FC = ({ children }) => {
         });
 
         setProducts(productsUpdated);
-
-        await AsyncStorage.setItem(
-          '@GoMarketplace:products',
-          JSON.stringify(products),
-        );
       } else {
         throw new Error('product not find.');
       }
@@ -120,11 +117,6 @@ const CartProvider: React.FC = ({ children }) => {
           });
           setProducts(productsUpdated);
         }
-
-        await AsyncStorage.setItem(
-          '@GoMarketplace:products',
-          JSON.stringify(products),
-        );
       } else {
         throw new Error('product not find.');
       }
